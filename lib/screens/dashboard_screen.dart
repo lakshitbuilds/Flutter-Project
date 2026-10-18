@@ -290,14 +290,11 @@ class _Overview extends StatelessWidget {
             onRetry: catalog.loadUsers,
           )),
           const SizedBox(height: 18),
-          Obx(() => Text(
-            auth.isDemo.value
-                ? 'Demo session • DummyJSON API authentication'
-                : 'Session • Firebase email/password authentication',
+          const Text(
+            'Signed in using the DummyJSON authentication API',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: Color(0xFF64748B), fontSize: 12),
-          )),
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
         ],
       ),
     );

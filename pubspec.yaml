@@ -1,5 +1,5 @@
 name: flutterproject
-description: "Mobile Computing internal exam - Firebase login and two DummyJSON APIs."
+description: "Mobile Computing internal exam - API-only login, registration and DummyJSON."
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -6,19 +6,15 @@ import '../models/app_user.dart';
 import '../models/product_model.dart';
 
 class ApiServices {
-  static const String firebaseApiKey =
-      String.fromEnvironment('FIREBASE_API_KEY');
-
   static const Duration _timeout = Duration(seconds: 20);
-
-  bool get firebaseConfigured => firebaseApiKey.isNotEmpty;
+  static const String _baseUrl = 'https://dummyjson.com';
 
   Future<List<Product>> getProducts() async {
     final response = await http
-        .get(Uri.parse('https://dummyjson.com/products?limit=100'))
+        .get(Uri.parse('$_baseUrl/products?limit=100'))
         .timeout(_timeout);
     if (response.statusCode != 200) {
-      throw Exception('Products API returned ${response.statusCode}');
+      throw Exception('Products API returned ' + response.statusCode.toString());
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final items = data['products'] as List<dynamic>? ?? [];
@@ -29,10 +25,10 @@ class ApiServices {
 
   Future<List<AppUser>> getUsers() async {
     final response = await http
-        .get(Uri.parse('https://dummyjson.com/users?limit=100'))
+        .get(Uri.parse('$_baseUrl/users?limit=100'))
         .timeout(_timeout);
     if (response.statusCode != 200) {
-      throw Exception('Users API returned ${response.statusCode}');
+      throw Exception('Users API returned ' + response.statusCode.toString());
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final items = data['users'] as List<dynamic>? ?? [];
@@ -41,91 +37,74 @@ class ApiServices {
         .toList();
   }
 
-  Future<Map<String, dynamic>> firebaseAuth({
+  // Authentic login with a pre-existing DummyJSON test user.
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'username': username.trim(),
+            'password': password,
+            'expiresInMins': 30,
+          }),
+        )
+        .timeout(_timeout);
+    final data = _decode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(_message(data, 'Incorrect username or password.'));
+    }
+    if ((data['accessToken'] ?? '').toString().isEmpty) {
+      throw Exception('Login failed: access token was not returned.');
+    }
+    return data;
+  }
+
+  // This is a SIMULATED create-user API. DummyJSON does not persist users.
+  // Do not use a personal or reused password with this demo API.
+  Future<Map<String, dynamic>> registerUser({
+    required String fullName,
+    required String username,
     required String email,
     required String password,
-    required bool register,
   }) async {
-    if (!firebaseConfigured) {
-      throw Exception(
-        'Firebase is not configured. See README for the FIREBASE_API_KEY setup.',
-      );
-    }
-    final action = register ? 'signUp' : 'signInWithPassword';
-    final uri = Uri.https(
-      'identitytoolkit.googleapis.com',
-      '/v1/accounts:$action',
-      {'key': firebaseApiKey},
-    );
-
+    final names = fullName.trim().split(RegExp(r'\s+'));
+    final firstName = names.first;
+    final lastName = names.skip(1).join(' ');
     final response = await http
         .post(
-          uri,
+          Uri.parse('$_baseUrl/users/add'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
+            'firstName': firstName,
+            'lastName': lastName,
+            'username': username.trim(),
             'email': email.trim(),
             'password': password,
-            'returnSecureToken': true,
           }),
         )
         .timeout(_timeout);
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      final error = (data['error'] as Map<String, dynamic>?)?['message']
-              ?.toString() ??
-          'Authentication failed';
-      throw Exception(_firebaseError(error));
+    final data = _decode(response.body);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_message(data, 'Could not submit registration request.'));
     }
-    if ((data['idToken'] ?? '').toString().isEmpty) {
-      throw Exception('Authentication server did not return a session.');
+    if (data['id'] == null) {
+      throw Exception('Registration API did not return a user ID.');
     }
     return data;
   }
 
-  // Demo authentication uses DummyJSON's real test-login endpoint.
-  Future<Map<String, dynamic>> demoLogin() async {
-    final response = await http
-        .post(
-          Uri.parse('https://dummyjson.com/user/login'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'username': 'emilys',
-            'password': 'emilyspass',
-          }),
-        )
-        .timeout(_timeout);
-    if (response.statusCode != 200) {
-      throw Exception('Demo login failed. Please retry.');
-    }
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if ((data['accessToken'] ?? '').toString().isEmpty) {
-      throw Exception('Demo login did not return an access token.');
-    }
-    return data;
+  Map<String, dynamic> _decode(String body) {
+    final value = jsonDecode(body);
+    if (value is Map<String, dynamic>) return value;
+    throw Exception('Unexpected API response format.');
   }
 
-  String _firebaseError(String error) {
-    if (error.startsWith('EMAIL_EXISTS')) {
-      return 'An account with this email already exists.';
-    }
-    if (error.startsWith('EMAIL_NOT_FOUND') ||
-        error.startsWith('INVALID_PASSWORD') ||
-        error.startsWith('INVALID_LOGIN_CREDENTIALS')) {
-      return 'Incorrect email or password.';
-    }
-    if (error.startsWith('WEAK_PASSWORD')) {
-      return 'Password is too weak. Use at least 6 characters.';
-    }
-    if (error.startsWith('INVALID_EMAIL')) {
-      return 'Please enter a valid email address.';
-    }
-    if (error.startsWith('OPERATION_NOT_ALLOWED')) {
-      return 'Enable Email/Password in Firebase Authentication.';
-    }
-    if (error.startsWith('TOO_MANY_ATTEMPTS_TRY_LATER')) {
-      return 'Too many attempts. Please try again later.';
-    }
-    return error.replaceAll('_', ' ');
+  String _message(Map<String, dynamic> data, String fallback) {
+    final message = data['message']?.toString();
+    return message == null || message.isEmpty ? fallback : message;
   }
 }

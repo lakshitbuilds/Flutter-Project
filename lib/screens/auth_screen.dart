@@ -14,6 +14,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
@@ -25,6 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void dispose() {
     _name.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
     _confirmPassword.dispose();
@@ -46,11 +48,41 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
     final error = _register
         ? await _auth.register(
-            _name.text.trim(), _email.text.trim(), _password.text)
-        : await _auth.login(_email.text.trim(), _password.text);
+            _name.text.trim(),
+            _username.text.trim(),
+            _email.text.trim(),
+            _password.text,
+          )
+        : await _auth.login(_username.text.trim(), _password.text);
     if (!mounted) return;
     if (error != null) {
       _showError(error);
+    } else if (_register) {
+      // DummyJSON registration returns a user ID but never saves the user.
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Registration request accepted'),
+          content: const Text(
+            'DummyJSON returned a new user ID, but it does not save '
+            'registered accounts. New details cannot be used to sign in. '
+            'Use the demo account: emilys / emilyspass.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Go to login'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _register = false;
+        _username.text = 'emilys';
+        _password.clear();
+        _confirmPassword.clear();
+      });
     } else {
       Get.offAll(() => const DashboardScreen());
     }
@@ -163,8 +195,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             const SizedBox(height: 6),
                             Text(
                               _register
-                                  ? 'Register with Firebase to get started'
-                                  : 'Sign in to explore products and users',
+                                  ? 'Try the DummyJSON registration API'
+                                  : 'Sign in using your DummyJSON username',
                               style: const TextStyle(color: Color(0xFF65708C)),
                             ),
                             const SizedBox(height: 22),
@@ -181,21 +213,38 @@ class _AuthScreenState extends State<AuthScreen> {
                               const SizedBox(height: 14),
                             ],
                             TextFormField(
-                              controller: _email,
-                              keyboardType: TextInputType.emailAddress,
-                              autofillHints: const [AutofillHints.email],
+                              controller: _username,
+                              autocorrect: false,
                               decoration: _inputDecoration(
-                                  'Email address', Icons.mail_outline),
+                                'Username', Icons.alternate_email_rounded),
                               validator: (v) {
                                 final value = v?.trim() ?? '';
-                                if (value.isEmpty) return 'Email is required';
-                                if (!GetUtils.isEmail(value)) {
-                                  return 'Enter a valid email address';
+                                if (value.isEmpty) return 'Username is required';
+                                if (value.length < 3) {
+                                  return 'Enter at least 3 characters';
                                 }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 14),
+                            if (_register) ...[
+                              TextFormField(
+                                controller: _email,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.email],
+                                decoration: _inputDecoration(
+                                    'Email address', Icons.mail_outline),
+                                validator: (v) {
+                                  final value = v?.trim() ?? '';
+                                  if (value.isEmpty) return 'Email is required';
+                                  if (!GetUtils.isEmail(value)) {
+                                    return 'Enter a valid email address';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 14),
+                            ],
                             TextFormField(
                               controller: _password,
                               obscureText: _hidePassword,
@@ -291,7 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ? null
                                     : _demoLogin,
                                 icon: const Icon(Icons.play_circle_outline),
-                                label: const Text('Try demo login (no setup)'),
+                                label: const Text('Sign in with demo API account'),
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.all(13),
                                   shape: RoundedRectangleBorder(
@@ -300,18 +349,19 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                               )),
                             ],
-                            if (!_auth.firebaseConfigured) ...[
-                              const SizedBox(height: 14),
-                              const Text(
-                                'Firebase login and registration need a Firebase API key. '
-                                'Demo login works without one. See README.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF8A5A19),
-                                ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _register
+                                  ? 'Demo only: the API returns a user ID but '
+                                    'does not save your account. Use test details, '
+                                    'not a real password.'
+                                  : 'Test account: emilys / emilyspass',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF8A5A19),
                               ),
-                            ],
+                            ),
                           ],
                         ),
                       ),

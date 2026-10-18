@@ -7,46 +7,22 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final email = ''.obs;
   final displayName = ''.obs;
-  final isDemo = false.obs;
 
-  bool get firebaseConfigured => _api.firebaseConfigured;
-
-  Future<String?> login(String userEmail, String password) async {
-    return _authenticate(
-      emailAddress: userEmail,
-      password: password,
-      register: false,
-    );
-  }
-
-  Future<String?> register(String name, String userEmail, String password) {
-    return _authenticate(
-      emailAddress: userEmail,
-      password: password,
-      register: true,
-      name: name,
-    );
-  }
-
-  // Return null when successful, or a user-friendly error message.
-  Future<String?> _authenticate({
-    required String emailAddress,
-    required String password,
-    required bool register,
-    String? name,
-  }) async {
+  // Login calls the real DummyJSON authentication endpoint.
+  // Returns null on success, or an error message on failure.
+  Future<String?> login(String username, String password) async {
     isLoading.value = true;
     try {
-      final result = await _api.firebaseAuth(
-        email: emailAddress,
+      final user = await _api.login(
+        username: username,
         password: password,
-        register: register,
       );
-      email.value = (result['email'] ?? emailAddress).toString();
-      displayName.value = name?.trim().isNotEmpty == true
-          ? name!.trim()
-          : email.value.split('@').first;
-      isDemo.value = false;
+      email.value = (user['email'] ?? '').toString();
+      final first = (user['firstName'] ?? '').toString();
+      final last = (user['lastName'] ?? '').toString();
+      displayName.value = ('$first $last').trim().isNotEmpty
+          ? ('$first $last').trim()
+          : username;
       return null;
     } catch (error) {
       return error.toString().replaceFirst('Exception: ', '');
@@ -55,13 +31,24 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<String?> demoLogin() async {
+  // Quick login still makes an actual HTTP API request.
+  Future<String?> demoLogin() => login('emilys', 'emilyspass');
+
+  // Registration is a simulated POST, not a persisted account.
+  Future<String?> register(
+    String fullName,
+    String username,
+    String userEmail,
+    String password,
+  ) async {
     isLoading.value = true;
     try {
-      final user = await _api.demoLogin();
-      email.value = (user['email'] ?? '').toString();
-      displayName.value = (user['firstName'] ?? 'Demo Student').toString();
-      isDemo.value = true;
+      await _api.registerUser(
+        fullName: fullName,
+        username: username,
+        email: userEmail,
+        password: password,
+      );
       return null;
     } catch (error) {
       return error.toString().replaceFirst('Exception: ', '');
@@ -73,6 +60,5 @@ class AuthController extends GetxController {
   void logout() {
     email.value = '';
     displayName.value = '';
-    isDemo.value = false;
   }
 }

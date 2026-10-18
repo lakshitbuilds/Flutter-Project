@@ -1,74 +1,73 @@
-# Campus Catalog — Flutter Mobile Computing Internal Examination
+# Campus Catalog — Mobile Computing Internal Examination
 
-A Flutter application built around the concepts from
-[SparksToIdeasdev10/lj_class_code](https://github.com/SparksToIdeasdev10/lj_class_code),
-especially the class_e examples for GetX controllers, API services, models,
-ListView, GridView, navigation and forms.
+A Flutter + GetX application modeled after
+[lj_class_code](https://github.com/SparksToIdeasdev10/lj_class_code),
+especially the screen / controller / model / API service pattern.
 
-## Examination checklist
+**No Firebase, no API keys, and no private backend configuration needed.**
+All networking uses the DummyJSON REST API.
 
-| Requirement | Where implemented |
+## Requirements
+
+| Internal examination requirement | Implementation |
 | --- | --- |
-| Login using API or Firebase | Firebase Email/Password REST API, or DummyJSON demo API login |
-| Registration | Firebase Email/Password REST API |
-| Dashboard | Live status cards and navigation after successful login |
-| Products API | GET https://dummyjson.com/products |
-| Users API | GET https://dummyjson.com/users |
+| API login | POST https://dummyjson.com/auth/login |
+| API registration | POST https://dummyjson.com/users/add (simulated registration) |
+| Dashboard after login | Dashboard with live product/user counts, search and navigation |
+| Products API | GET https://dummyjson.com/products?limit=100 |
+| Users API | GET https://dummyjson.com/users?limit=100 |
 
-The products and users endpoints are requested as soon as the dashboard opens.
-The app shows loading, error, retry, search, detail views, and pull-to-refresh.
+## Important limitation of the registration API
 
-## Start immediately (demo mode)
+DummyJSON is a **mock/testing API**, not a real account database.
 
-1. Clone the repository and open it in Android Studio / VS Code.
-2. Run:
+- `POST /users/add` returns a response with a newly created user ID, but **does not actually save the account** on the server.
+- Therefore, the username and password entered in the registration form **cannot be used to log in** later.
+- Only existing DummyJSON sample users can log in via `POST /auth/login`.
+- The app clearly explains this before registration and again after successful submission.
+- **Never use a real personal password** in the registration demo.
 
-   ```bash
-   flutter pub get
-   flutter run
-   ```
+If your examiner needs new accounts that can subsequently log in, a real persistent authentication API/backend is required. This project intentionally has no Firebase integration.
 
-3. On the login screen press **Try demo login (no setup)**.
-   This calls DummyJSON's test login endpoint using its public demo credentials
-   and opens the real dashboard with live Products and Users API responses.
+## Running the app
 
-Demo login is for showcasing the app, not for creating a private account.
+```bash
+git pull origin main
+flutter pub get
+flutter run
+```
 
-## Enable real registration and login (Firebase)
+No `--dart-define` or external service setup is required.
 
-The **Register** and **Sign in** form uses Google's Firebase Authentication
-REST API. This is real account creation/authentication, not a mock registration.
-You must connect your own Firebase project; no key is supplied in this repository.
+### Login credentials for evaluation
 
-1. Open [Firebase Console](https://console.firebase.google.com/), create
-   or select a Firebase project.
-2. Go to **Build > Authentication > Sign-in method** and enable
-   **Email/Password**.
-3. Under **Project settings > General**, find your project's **Web API Key**.
-4. Launch using the key supplied at build time:
+- **Username:** `emilys`
+- **Password:** `emilyspass`
 
-   ```bash
-   flutter run --dart-define=FIREBASE_API_KEY=YOUR_FIREBASE_WEB_API_KEY
-   ```
+Tap **Sign in** to make the actual `POST /auth/login` request; the app verifies the API access token before navigating to the dashboard.
 
-   To build Android:
+Or tap **Sign in with demo API account** to submit the same credentials to the real API automatically.
 
-   ```bash
-   flutter build apk --dart-define=FIREBASE_API_KEY=YOUR_FIREBASE_WEB_API_KEY
-   ```
+### Registration demonstration
 
-5. Choose **Create an account**, register with an email and password of 6+
-   characters, then sign out and sign in using the same credentials.
+1. From the login page choose **Create an account**.
+2. Enter a test full name, username, email and a **throwaway test password**.
+3. Press **Create account**.
+4. The app calls `POST /users/add`, validates the response, shows the result and explains that this mock registration is not persisted.
+5. Return to login and use the existing demo username/password above.
 
-The Firebase key is an identifier rather than a password. Firebase API keys
-may still need appropriate API restrictions and monitoring. Never commit
-private service-account keys. For this exam project, user sessions are
-in-memory only and sign-in is required again after a cold start.
+### Dashboard and required two APIs
 
-**For Flutter web:** configure your Firebase project's Authorized domains
-as required by its Auth setup. If needed, allow the project origin.
+1. After successful login, the dashboard requests products and users in parallel.
+2. Show the live counts and green API connection indicators.
+3. Open **Products**. Search and tap a card to see price, description, stock and rating.
+4. Open **Users**. Search and tap a user to see their contact information.
+5. Pull down to refresh, or use the refresh icon in the app bar.
+6. Open the drawer or bottom navigation to switch screens; use **Sign out** to return to login.
 
-## Project files
+The existing login session lives in memory and is cleared on sign-out/app restart.
+
+## Structure
 
 ```text
 lib/
@@ -88,27 +87,18 @@ lib/
     api_services.dart
 ```
 
-- **Models** read JSON into typed Dart objects.
-- **ApiServices** calls both required GET APIs and the authentication APIs.
-- **GetX Controllers** manage loading, success, failure, and screen state.
-- **Screens** contain user interface widgets and navigation.
+- **API service:** HTTP GET and POST calls with JSON handling and timeouts.
+- **Controllers (GetX):** loading status, errors, profile and fetched lists.
+- **Models:** parse JSON responses into typed classes.
+- **Screens:** login, registration, dashboard, products and users.
 
-## Teacher demo flow
-
-1. Sign in with Firebase, or press the demo login button.
-2. Show the dashboard's two API status indicators and loaded record counts.
-3. Open **Products**, search an item, and tap to see details.
-4. Open **Users**, search a name, and tap to see contact information.
-5. Pull down to refresh an API list.
-6. Sign out, register a Firebase test account, then sign in with it.
-
-## Testing
+## Local checks
 
 ```bash
 flutter analyze
 flutter test
+flutter run
 ```
 
-**Note:** DummyJSON is sample data. The product and user listings are not
-the same as the accounts created with Firebase. Firebase credentials are
-not sent to DummyJSON.
+This repository change was written and committed remotely; these commands
+must be executed on a machine with the Flutter SDK to validate the application.

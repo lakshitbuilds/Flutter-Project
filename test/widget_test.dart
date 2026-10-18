@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flutterproject/main.dart';
+import 'package:flutterproject/models/app_user.dart';
+import 'package:flutterproject/models/product_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Product model reads API fields', () {
+    final product = Product.fromJson({
+      'id': 1,
+      'title': 'Phone',
+      'description': 'Test product',
+      'category': 'electronics',
+      'price': 19.95,
+      'rating': 4.6,
+      'stock': 12,
+      'thumbnail': 'https://example.com/item.png',
+    });
+    expect(product.title, 'Phone');
+    expect(product.price, 19.95);
+    expect(product.rating, 4.6);
+    expect(product.brand, 'Generic');
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('User model reads nested company data', () {
+    final user = AppUser.fromJson({
+      'id': 1,
+      'firstName': 'Emily',
+      'lastName': 'Johnson',
+      'email': 'emily@example.com',
+      'age': 28,
+      'company': {'name': 'Example Ltd'},
+    });
+    expect(user.fullName, 'Emily Johnson');
+    expect(user.company, 'Example Ltd');
+    expect(user.age, 28);
   });
 }

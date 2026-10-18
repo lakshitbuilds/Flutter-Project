@@ -49,19 +49,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _changeTab(int index) {
-    Navigator.maybePop(context); // Close an open drawer if present.
-    setState(() => selectedTab = index);
-  }
-
   @override
   Widget build(BuildContext context) {
     const titles = ['Overview', 'Products', 'Users'];
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FC),
       appBar: AppBar(
-        title: Text(titles[selectedTab],
-            style: const TextStyle(fontWeight: FontWeight.w800)),
+        automaticallyImplyLeading: false,
+        title: Text(
+          titles[selectedTab],
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
@@ -85,54 +83,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 7),
         ],
       ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: Column(
-            children: [
-              UserAccountsDrawerHeader(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF3446A5),
-                ),
-                accountName: Obx(() => Text(auth.displayName.value)),
-                accountEmail: Obx(() => Text(auth.email.value)),
-                currentAccountPicture: const CircleAvatar(
-                  child: Icon(Icons.person_rounded, size: 34),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.space_dashboard_outlined),
-                title: const Text('Dashboard'),
-                onTap: () => _changeTab(0),
-              ),
-              ListTile(
-                leading: const Icon(Icons.inventory_2_outlined),
-                title: const Text('Products'),
-                onTap: () => _changeTab(1),
-              ),
-              ListTile(
-                leading: const Icon(Icons.people_alt_outlined),
-                title: const Text('Users'),
-                onTap: () => _changeTab(2),
-              ),
-              const Spacer(),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Sign out'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmLogout();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
       body: IndexedStack(
         index: selectedTab,
         children: [
-          _Overview(
-            onSelect: (tab) => setState(() => selectedTab = tab),
-          ),
+          _Overview(onSelect: (tab) => setState(() => selectedTab = tab)),
           const ProductsScreen(),
           const UsersScreen(),
         ],
@@ -192,14 +146,16 @@ class _Overview extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Obx(() => Text(
-                  'Hello, ${auth.displayName.value} 👋',
-                  style: const TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                Obx(
+                  () => Text(
+                    'Hello, ${auth.displayName.value} 👋',
+                    style: const TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'Explore real-time data from two REST APIs.',
@@ -210,8 +166,10 @@ class _Overview extends StatelessWidget {
                   children: [
                     Icon(Icons.check_circle_outline, color: Color(0xFFB3F5DC)),
                     SizedBox(width: 8),
-                    Text('Signed in successfully',
-                        style: TextStyle(color: Color(0xFFB3F5DC))),
+                    Text(
+                      'Signed in successfully',
+                      style: TextStyle(color: Color(0xFFB3F5DC)),
+                    ),
                   ],
                 ),
               ],
@@ -226,34 +184,41 @@ class _Overview extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Obx(() => _StatCard(
-                  icon: Icons.shopping_bag_outlined,
-                  label: 'Products',
-                  value: catalog.productsLoading.value &&
-                          catalog.products.isEmpty
-                      ? '...'
-                      : '${catalog.products.length}',
-                  color: const Color(0xFF3B5CC4),
-                  onTap: () => onSelect(1),
-                )),
+                child: Obx(
+                  () => _StatCard(
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Products',
+                    value:
+                        catalog.productsLoading.value &&
+                            catalog.products.isEmpty
+                        ? '...'
+                        : '${catalog.products.length}',
+                    color: const Color(0xFF3B5CC4),
+                    onTap: () => onSelect(1),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Obx(() => _StatCard(
-                  icon: Icons.groups_2_outlined,
-                  label: 'Users',
-                  value: catalog.usersLoading.value && catalog.users.isEmpty
-                      ? '...'
-                      : '${catalog.users.length}',
-                  color: const Color(0xFF009D87),
-                  onTap: () => onSelect(2),
-                )),
+                child: Obx(
+                  () => _StatCard(
+                    icon: Icons.groups_2_outlined,
+                    label: 'Users',
+                    value: catalog.usersLoading.value && catalog.users.isEmpty
+                        ? '...'
+                        : '${catalog.users.length}',
+                    color: const Color(0xFF009D87),
+                    onTap: () => onSelect(2),
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          const Text('Explore data',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Explore data',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           _ExploreTile(
             icon: Icons.inventory_2_outlined,
@@ -271,24 +236,30 @@ class _Overview extends StatelessWidget {
             onTap: () => onSelect(2),
           ),
           const SizedBox(height: 24),
-          const Text('API connection status',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'API connection status',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
-          Obx(() => _ApiStatus(
-            name: 'dummyjson.com/products',
-            loading: catalog.productsLoading.value,
-            error: catalog.productsError.value,
-            count: catalog.products.length,
-            onRetry: catalog.loadProducts,
-          )),
+          Obx(
+            () => _ApiStatus(
+              name: 'dummyjson.com/products',
+              loading: catalog.productsLoading.value,
+              error: catalog.productsError.value,
+              count: catalog.products.length,
+              onRetry: catalog.loadProducts,
+            ),
+          ),
           const SizedBox(height: 10),
-          Obx(() => _ApiStatus(
-            name: 'dummyjson.com/users',
-            loading: catalog.usersLoading.value,
-            error: catalog.usersError.value,
-            count: catalog.users.length,
-            onRetry: catalog.loadUsers,
-          )),
+          Obx(
+            () => _ApiStatus(
+              name: 'dummyjson.com/users',
+              loading: catalog.usersLoading.value,
+              error: catalog.usersError.value,
+              count: catalog.users.length,
+              onRetry: catalog.loadUsers,
+            ),
+          ),
           const SizedBox(height: 18),
           const Text(
             'Signed in using the DummyJSON authentication API',
@@ -334,13 +305,18 @@ class _StatCard extends StatelessWidget {
                 child: Icon(icon, color: color),
               ),
               const SizedBox(height: 14),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 29, fontWeight: FontWeight.w800)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 29,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(label,
-                  style: const TextStyle(
-                      color: Color(0xFF64748B), fontSize: 13)),
+              Text(
+                label,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              ),
             ],
           ),
         ),
@@ -377,8 +353,7 @@ class _ExploreTile extends StatelessWidget {
           backgroundColor: color,
           child: Icon(icon, color: const Color(0xFF3446A5)),
         ),
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 17),
       ),
@@ -406,10 +381,10 @@ class _ApiStatus extends StatelessWidget {
     final message = loading
         ? 'Loading...'
         : error.isNotEmpty
-            ? 'Failed • tap to retry'
-            : success
-                ? 'Connected • $count records'
-                : 'No records returned';
+        ? 'Failed • tap to retry'
+        : success
+        ? 'Connected • $count records'
+        : 'No records returned';
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(15),
@@ -419,13 +394,13 @@ class _ApiStatus extends StatelessWidget {
           loading
               ? Icons.sync
               : success
-                  ? Icons.check_circle_outline
-                  : Icons.error_outline,
+              ? Icons.check_circle_outline
+              : Icons.error_outline,
           color: loading
               ? Colors.orange
               : success
-                  ? const Color(0xFF009D87)
-                  : Colors.redAccent,
+              ? const Color(0xFF009D87)
+              : Colors.redAccent,
         ),
         title: Text(name, style: const TextStyle(fontSize: 14)),
         subtitle: Text(message, style: const TextStyle(fontSize: 12)),

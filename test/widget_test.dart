@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutterproject/models/app_user.dart';
-import 'package:flutterproject/models/product_model.dart';
+import 'package:flutterproject/users/user_model.dart';
+import 'package:flutterproject/products/product_model.dart';
 
 void main() {
   test('Product model reads API fields', () {

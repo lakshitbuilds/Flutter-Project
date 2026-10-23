@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/app_user.dart';
-import '../models/product_model.dart';
+import '../users/user_model.dart';
+import '../products/product_model.dart';
 
 class ApiServices {
   static const Duration _timeout = Duration(seconds: 20);
@@ -14,7 +14,7 @@ class ApiServices {
         .get(Uri.parse('$_baseUrl/products?limit=100'))
         .timeout(_timeout);
     if (response.statusCode != 200) {
-      throw Exception('Products API returned ' + response.statusCode.toString());
+      throw Exception('Products API returned ${response.statusCode}');
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final items = data['products'] as List<dynamic>? ?? [];
@@ -28,7 +28,7 @@ class ApiServices {
         .get(Uri.parse('$_baseUrl/users?limit=100'))
         .timeout(_timeout);
     if (response.statusCode != 200) {
-      throw Exception('Users API returned ' + response.statusCode.toString());
+      throw Exception('Users API returned ${response.statusCode}');
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final items = data['users'] as List<dynamic>? ?? [];
